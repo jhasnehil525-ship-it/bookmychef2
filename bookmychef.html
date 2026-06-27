@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BookMyChef – Trusted Chefs at Your Doorstep</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --dark: #0f0f0f;
+      --dark2: #1a1a1a;
+      --dark3: #242424;
+      --dark4: #2e2e2e;
+      --gold: #d4a017;
+      --gold2: #f0c040;
+      --gold3: #ffd966;
+      --gold-light: #fff3cc;
+      --text: #f0f0f0;
+      --text-muted: #a0a0a0;
+      --text-dim: #6b6b6b;
+      --green: #22c55e;
+      --border: #333;
+      --card: #1e1e1e;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── NAVBAR ─── */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,15,15,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name { font-weight: 800; font-size: 18px; color: var(--gold2); }
+    .logo-tagline { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+    }
+    .nav-links a {
+      padding: 6px 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--gold2);
+      background: rgba(212,160,23,0.1);
+    }
+    .nav-links a.active { border-bottom: 2px solid var(--gold2); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .btn-ghost {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold2); }
+
+    .btn-gold {
+      padding: 8px 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-gold:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,160,23,0.4); }
+
+    .saved-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .saved-pill:hover { border-color: var(--gold); color: var(--gold2); }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+    }
+
+    /* ─── PAGES ─── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── HOME PAGE ─── */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      align-items: center;
+      padding: 60px 40px;
+      gap: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(212,160,23,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -50px; left: -50px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(212,160,23,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-left { flex: 1; max-width: 500px; z-index: 1; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--gold2);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero-title .highlight-gold { color: var(--gold2); }
+    .hero-title .highlight-green { color: #4ade80; }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 420px;
+    }
+
+    .hero-features {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+    .hero-feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+    .feat-icon {
+      width: 44px; height: 44px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .feat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-align: center; }
+
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .stat-avatars {
+      display: flex;
+    }
+    .stat-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--dark);
+      margin-left: -8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #000;
+    }
+    .stat-avatar:first-child { margin-left: 0; }
+    .stat-text { font-size: 13px; color: var(--text-muted); }
+    .stat-text strong { color: var(--gold2); }
+
+    /* Hero Image */
+    .hero-image {
+      flex: 1;
+      max-width: 440px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-img-container {
+      width: 100%;
+      height: 420px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2a1f00, #1a1400);
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(212,160,23,0.2);
+      position: relative;
+    }
+    .chef-illustration {
+      font-size: 120px;
+      text-align: center;
+      opacity: 0.9;
+    }
+    .hero-floating-card {
+      position: absolute;
+      bottom: 24px; left: 24px; right: 24px;
+      background: rgba(15,15,15,0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212,160,23,0.3);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .stars { color: var(--gold2); font-size: 14px; }
+    .card-text { font-size: 13px; }
+    .card-text strong { color: var(--gold2); }
+    .card-text span { color: var(--text-muted); font-size: 11px; display: block; }
+
+    /* Search Widget */
+    .search-widget {
+      flex-shrink: 0;
+      width: 340px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      z-index: 1;
+    }
+    .search-widget h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .search-widget p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+    .sw-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .type-btns {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .type-btn {
+      flex: 1;
+      padding: 10px 8px;
+      background: var(--dark3);
+      border: 2px solid var(--dark4);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .type-btn .tb-icon { font-size: 20px; }
+    .type-btn:hover, .type-btn.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: rgba(212,160,23,0.08);
+    }
+
+    .sw-input {
+      width: 100%;
+      padding: 10px 14px 10px 36px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .sw-input:focus { border-color: var(--gold); }
+    .sw-input-wrap { position: relative; margin-bottom: 16px; }
+    .sw-input-wrap .sw-input { margin-bottom: 0; }
+    .sw-input-icon {
+      position: absolute;
+      left: 11px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .sw-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 20px;
+      appearance: none;
+      cursor: pointer;
+    }
+    .sw-select:focus { border-color: var(--gold); }
+
+    .btn-find {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .2s;
+    }
+    .btn-find:hover { opacity: 0.9; box-shadow: 0 6px 20px rgba(212,160,23,0.4); }
+    .btn-find-note { text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 10px; }
+
+    /* How it Works */
+    .section {
+      padding: 80px 40px;
+    }
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--gold2);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .section-sub { font-size: 16px; color: var(--text-muted); max-width: 520px; margin-bottom: 48px; }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .how-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      transition: all .3s;
+      position: relative;
+    }
+    .how-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(212,160,23,0.1);
+    }
+    .how-step {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      width: 24px; height: 24px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #000;
+    }
+    .how-icon { font-size: 36px; margin-bottom: 14px; display: block; }
+    .how-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .how-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* Pricing section */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .pricing-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      transition: all .3s;
+      position: relative;
+    }
+    .pricing-card.featured {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(240,192,64,0.04));
+    }
+    .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(212,160,23,0.1); }
+    .pc-badge {
+      position: absolute;
+      top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .pc-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+    .pc-type { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .pc-price { font-size: 32px; font-weight: 800; color: var(--gold2); margin-bottom: 4px; }
+    .pc-price span { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+    .pc-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .pc-features { list-style: none; text-align: left; margin-bottom: 24px; }
+    .pc-features li {
+      font-size: 13px;
+      padding: 5px 0;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pc-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .btn-book {
+      width: 100%;
+      padding: 11px;
+      background: var(--dark4);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-book:hover, .pricing-card.featured .btn-book {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-color: transparent;
+      color: #000;
+    }
+
+    /* ─── FIND CHEF PAGE ─── */
+    .find-page {
+      display: flex;
+      min-height: calc(100vh - 64px);
+    }
+
+    /* sidebar */
+    .sidebar {
+      width: 270px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--dark4); border-radius: 2px; }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .sidebar-header h3 { font-size: 15px; font-weight: 700; }
+    .clear-btn { font-size: 12px; color: var(--gold); cursor: pointer; font-weight: 500; background: none; border: none; }
+    .clear-btn:hover { color: var(--gold2); }
+
+    .filter-group { margin-bottom: 24px; }
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .filter-radio {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-radio label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: all .2s;
+      border: 1px solid transparent;
+    }
+    .filter-radio label:hover { background: var(--dark3); color: var(--text); }
+    .filter-radio input[type="radio"]:checked + label,
+    .filter-radio label:has(input[type="radio"]:checked) {
+      background: rgba(212,160,23,0.08);
+      border-color: rgba(212,160,23,0.3);
+      color: var(--gold2);
+    }
+    .filter-radio input { display: none; }
+    .radio-icon { font-size: 16px; }
+
+    .filter-check label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: color .2s;
+    }
+    .filter-check label:hover { color: var(--text); }
+    .filter-check input[type="checkbox"] {
+      accent-color: var(--gold);
+      width: 15px; height: 15px;
+    }
+
+    .range-input {
+      width: 100%;
+      accent-color: var(--gold);
+      margin-top: 8px;
+    }
+    .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+    .location-input {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .location-input:focus { border-color: var(--gold); }
+
+    /* results */
+    .results-area {
+      flex: 1;
+      padding: 24px;
+      background: var(--dark);
+    }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .results-count { font-size: 18px; font-weight: 700; }
+    .results-count span { color: var(--gold2); }
+
+    .sort-select {
+      padding: 7px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .chef-cards { display: flex; flex-direction: column; gap: 16px; }
+
+    .chef-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      transition: all .3s;
+    }
+    .chef-card:hover {
+      border-color: rgba(212,160,23,0.4);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .chef-avatar {
+      width: 90px; height: 90px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #2a1f00, #1a1400);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 42px;
+      flex-shrink: 0;
+      border: 1px solid rgba(212,160,23,0.2);
+    }
+    .chef-info { flex: 1; }
+    .chef-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .chef-name { font-size: 17px; font-weight: 700; }
+    .verified-badge {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(34,197,94,0.1);
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(34,197,94,0.3);
+      font-weight: 600;
+    }
+    .chef-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .chef-rating {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 10px;
+    }
+    .stars-small { color: var(--gold2); font-size: 13px; }
+    .rating-num { font-size: 13px; font-weight: 600; }
+    .rating-count { font-size: 12px; color: var(--text-muted); }
+
+    .chef-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .tag {
+      padding: 3px 10px;
+      background: var(--dark3);
+      border: 1px solid var(--dark4);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .tag.gold { background: rgba(212,160,23,0.1); border-color: rgba(212,160,23,0.3); color: var(--gold2); }
+
+    .chef-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .chef-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      min-width: 180px;
+    }
+    .chef-meta { text-align: right; }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .meta-icon { font-size: 13px; }
+    .price-range {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold2);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .action-btns { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .btn-view {
+      padding: 9px 16px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+    }
+    .btn-view:hover { opacity: 0.9; }
+    .btn-wa {
+      padding: 8px 16px;
+      background: rgba(37,211,102,0.1);
+      border: 1px solid rgba(37,211,102,0.3);
+      color: #25d366;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-wa:hover { background: rgba(37,211,102,0.2); }
+    .btn-save {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-dim);
+      transition: all .2s;
+    }
+    .btn-save:hover { color: var(--gold2); transform: scale(1.2); }
+
+    /* ─── CHEF REGISTRATION PAGE ─── */
+    .reg-page {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+    .reg-header { margin-bottom: 40px; }
+    .reg-header h1 { font-size: 36px; font-weight: 800; margin-bottom: 10px; }
+    .reg-header p { font-size: 15px; color: var(--text-muted); line-height: 1.7; }
+
+    .steps-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .step-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      border: 2px solid var(--border);
+      color: var(--text-muted);
+      background: var(--dark3);
+      flex-shrink: 0;
+      transition: all .3s;
+    }
+    .step-dot.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: rgba(212,160,23,0.1);
+    }
+    .step-dot.done {
+      border-color: var(--green);
+      background: rgba(34,197,94,0.1);
+      color: var(--green);
+    }
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 8px;
+      transition: background .3s;
+    }
+    .step-line.done { background: var(--gold); }
+    .step-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 4px;
+    }
+    .steps-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      margin-bottom: 36px;
+    }
+    .steps-labels span { font-size: 11px; color: var(--text-dim); text-align: center; width: 80px; }
+    .steps-labels span.active-label { color: var(--gold2); font-weight: 600; }
+
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+    }
+    .form-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .form-label .required { color: var(--gold2); margin-left: 2px; }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .2s;
+    }
+    .form-input:focus { border-color: var(--gold); }
+    .form-input::placeholder { color: var(--text-dim); }
+
+    textarea.form-input { min-height: 90px; resize: vertical; }
+
+    .form-select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .form-select:focus { border-color: var(--gold); }
+
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .checkbox-pill {
+      padding: 6px 14px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+    }
+    .checkbox-pill.selected {
+      background: rgba(212,160,23,0.1);
+      border-color: var(--gold);
+      color: var(--gold2);
+    }
+
+    .upload-box {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--dark3);
+    }
+    .upload-box:hover { border-color: var(--gold); background: rgba(212,160,23,0.04); }
+    .upload-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+    .upload-text { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .upload-sub { font-size: 12px; color: var(--text-muted); }
+
+    .info-box {
+      background: rgba(212,160,23,0.08);
+      border: 1px solid rgba(212,160,23,0.2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .info-box-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .info-box-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+    .btn-back {
+      padding: 11px 24px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-back:hover { border-color: var(--gold); color: var(--gold2); }
+    .btn-next {
+      padding: 11px 28px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-next:hover { opacity: 0.9; box-shadow: 0 4px 16px rgba(212,160,23,0.4); }
+
+    /* ─── ABOUT PAGE ─── */
+    .about-hero {
+      padding: 80px 40px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-hero::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(circle, rgba(212,160,23,0.08) 0%, transparent 70%);
+    }
+    .about-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 20px; position: relative; }
+    .about-hero p { font-size: 17px; color: var(--text-muted); max-width: 600px; margin: 0 auto 40px; line-height: 1.7; position: relative; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .stat-box {
+      background: var(--card);
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .stat-num { font-size: 32px; font-weight: 800; color: var(--gold2); }
+    .stat-lbl { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .mission-section {
+      padding: 80px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .mission-left h2 { font-size: 36px; font-weight: 800; margin-bottom: 20px; line-height: 1.2; }
+    .mission-left p { font-size: 15px; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+    .mission-right {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+    }
+    .mission-point {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .mission-point:last-child { margin-bottom: 0; }
+    .mp-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .mp-text h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .mp-text p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .team-section { padding: 0 40px 80px; }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 800px;
+    }
+    .team-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      transition: all .3s;
+    }
+    .team-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+    .team-avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: #000;
+      margin: 0 auto 14px;
+    }
+    .team-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .team-role { font-size: 12px; color: var(--gold2); font-weight: 500; margin-bottom: 8px; }
+    .team-bio { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      background: var(--dark2);
+      border-top: 1px solid var(--border);
+      padding: 48px 40px 24px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .footer-brand .logo { margin-bottom: 14px; }
+    .footer-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; max-width: 240px; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 8px; }
+    .footer-col ul li a { font-size: 13px; color: var(--text-muted); text-decoration: none; cursor: pointer; transition: color .2s; }
+    .footer-col ul li a:hover { color: var(--gold2); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-bottom p { font-size: 12px; color: var(--text-dim); }
+    .footer-socials { display: flex; gap: 10px; }
+    .social-btn {
+      width: 32px; height: 32px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .social-btn:hover { border-color: var(--gold); transform: translateY(-2px); }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: var(--card);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 1000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all .3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { font-size: 18px; }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(20px);
+      transition: transform .3s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 22px; cursor: pointer; padding: 0; line-height: 1;
+      transition: color .2s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-chef-header {
+      display: flex; gap: 16px; align-items: center; margin-bottom: 24px;
+    }
+    .modal-chef-avatar {
+      width: 72px; height: 72px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #2a1f00, #1a1400);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      border: 1px solid rgba(212,160,23,0.3);
+    }
+    .modal-section-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 20px; }
+    .modal-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-detail {
+      background: var(--dark3);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .md-label { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
+    .md-value { font-size: 14px; font-weight: 600; }
+    .btn-book-now {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all .2s;
+    }
+    .btn-book-now:hover { opacity: 0.9; box-shadow: 0 6px 20px rgba(212,160,23,0.4); }
+
+    /* ─── SUCCESS STATE ─── */
+    .success-state {
+      text-align: center;
+      padding: 60px 40px;
+    }
+    .success-icon { font-size: 64px; margin-bottom: 20px; display: block; }
+    .success-state h2 { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+    .success-state p { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 400px; margin: 0 auto 28px; }
+
+    /* Responsive tweaks */
+    @media (max-width: 900px) {
+      .hero { flex-direction: column; padding: 40px 20px; }
+      .search-widget { width: 100%; }
+      .hero-image { display: none; }
+      .how-grid { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .find-page { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; top: 0; }
+      .mission-section { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-icon">👨‍🍳</div>
+    <div class="logo-text">
+      <span class="logo-name">BookMyChef</span>
+      <span class="logo-tagline">Trusted chefs at your doorstep</span>
+    </div>
+  </div>
+
+  <ul class="nav-links">
+    <li><a id="nav-home" class="active" onclick="showPage('home')">Home</a></li>
+    <li><a id="nav-find" onclick="showPage('find')">Find a Chef</a></li>
+    <li><a id="nav-about" onclick="showPage('about')">About Us</a></li>
+    <li><a id="nav-reg" onclick="showPage('register')">For Chefs</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <div class="saved-pill" onclick="showToast('❤️', 'You have 2 saved chefs')">
+      ❤️ Saved (2)
+    </div>
+    <button class="btn-gold" onclick="showPage('find')">🔍 Find a Chef</button>
+    <div class="user-avatar" onclick="showToast('👤', 'Hi, Rahul! Account options coming soon.')">R</div>
+  </div>
+</nav>
+
+<!-- ─── HOME PAGE ─── -->
+<div id="page-home" class="page active">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-badge">⭐ Verified • Trusted • Nearby</div>
+      <h1 class="hero-title">
+        Book Trusted<br/>
+        <span class="highlight-gold">Personal Chefs</span><br/>
+        Near You
+      </h1>
+      <p class="hero-sub">
+        Connect with verified, experienced chefs in your city. Book by the hour, day, or month — quick, simple, and reliable.
+      </p>
+      <div class="hero-features">
+        <div class="hero-feature">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-label">Verified<br/>Profiles</div>
+        </div>
+        <div class="hero-feature">
+          <div class="feat-icon">📍</div>
+          <div class="feat-label">Local &<br/>Nearby</div>
+        </div>
+        <div class="hero-feature">
+          <div class="feat-icon">⚙️</div>
+          <div class="feat-label">Experienced &<br/>Reliable</div>
+        </div>
+        <div class="hero-feature">
+          <div class="feat-icon">🕐</div>
+          <div class="feat-label">Flexible<br/>Booking</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-avatars">
+          <div class="stat-avatar">A</div>
+          <div class="stat-avatar">S</div>
+          <div class="stat-avatar">R</div>
+        </div>
+        <div class="stat-text">
+          Trusted by <strong>5,000+</strong> happy families across India
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-image">
+      <div class="hero-img-container">
+        <div>
+          <div class="chef-illustration">👨‍🍳</div>
+          <p style="text-align:center;color:var(--gold2);font-size:13px;margin-top:8px;font-weight:600;">Professional Chefs at Your Service</p>
+        </div>
+        <div class="hero-floating-card">
+          <div>
+            <div class="stat-avatars">
+              <div class="stat-avatar" style="font-size:10px">A</div>
+              <div class="stat-avatar" style="font-size:10px">P</div>
+              <div class="stat-avatar" style="font-size:10px">R</div>
+            </div>
+          </div>
+          <div>
+            <div class="stars">★★★★★</div>
+            <div class="card-text">
+              <strong>4.7/5</strong>
+              <span>(1,200+ reviews) · Happy Families</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Widget -->
+    <div class="search-widget">
+      <h3>Find Help Near You</h3>
+      <p>Tell us what you need and we'll show you the best chefs nearby.</p>
+
+      <div class="sw-label">I am looking for</div>
+      <div class="type-btns">
+        <div class="type-btn active" onclick="selectType(this, 'Chef')">
+          <span class="tb-icon">👨‍🍳</span>Chef
+        </div>
+        <div class="type-btn" onclick="selectType(this, 'Baker')">
+          <span class="tb-icon">🧁</span>Baker
+        </div>
+        <div class="type-btn" onclick="selectType(this, 'Catering')">
+          <span class="tb-icon">🍽️</span>Catering
+        </div>
+      </div>
+
+      <div class="sw-label">Your Location</div>
+      <div class="sw-input-wrap">
+        <span class="sw-input-icon">📍</span>
+        <input class="sw-input" type="text" placeholder="e.g. Patna, Bihar" value="Patna, Bihar" id="hero-location"/>
+      </div>
+
+      <div class="sw-label">Booking Type</div>
+      <select class="sw-select" id="hero-booking">
+        <option>Hourly</option>
+        <option>Daily</option>
+        <option selected>Monthly</option>
+      </select>
+
+      <button class="btn-find" onclick="showPage('find')">
+        🔍 Find Now
+      </button>
+      <p class="btn-find-note">It's free! No charges to contact.</p>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="section" style="background:var(--dark2);border-top:1px solid var(--border);">
+    <div class="section-tag">🚀 Simple Process</div>
+    <h2 class="section-title">How BookMyChef Works</h2>
+    <p class="section-sub">Get a verified chef at your doorstep in just 4 easy steps.</p>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-step">1</div>
+        <span class="how-icon">📍</span>
+        <div class="how-title">Enter Your Location</div>
+        <div class="how-desc">Enter your city or area to discover chefs available near you.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-step">2</div>
+        <span class="how-icon">🔍</span>
+        <div class="how-title">Browse Verified Chefs</div>
+        <div class="how-desc">View chef profiles with ratings, cuisine specialties, and ID verification.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-step">3</div>
+        <span class="how-icon">📅</span>
+        <div class="how-title">Book by Hour/Day/Month</div>
+        <div class="how-desc">Choose a flexible plan that fits your schedule and budget perfectly.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-step">4</div>
+        <span class="how-icon">🍛</span>
+        <div class="how-title">Enjoy Home-Cooked Meals</div>
+        <div class="how-desc">Your verified chef arrives on time and cooks fresh, delicious meals.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section">
+    <div class="section-tag">💰 Flexible Pricing</div>
+    <h2 class="section-title">Book on Your Terms</h2>
+    <p class="section-sub">Transparent, affordable pricing. No hidden charges. Cancel anytime.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <span class="pc-icon">⏰</span>
+        <div class="pc-type">Hourly</div>
+        <div class="pc-price">₹150 <span>/ hour</span></div>
+        <div class="pc-desc">Perfect for parties, events, or a one-time cooking session.</div>
+        <ul class="pc-features">
+          <li>Minimum 2 hours</li>
+          <li>Choose any cuisine</li>
+          <li>Ingredients by customer</li>
+          <li>ID-verified chef</li>
+        </ul>
+        <button class="btn-book" onclick="showPage('find')">Book Now</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pc-badge">Most Popular</div>
+        <span class="pc-icon">📅</span>
+        <div class="pc-type">Daily</div>
+        <div class="pc-price">₹800 <span>/ day</span></div>
+        <div class="pc-desc">3 meals/day. Great for families who want consistent home food.</div>
+        <ul class="pc-features">
+          <li>Breakfast, Lunch & Dinner</li>
+          <li>Meal planning included</li>
+          <li>Grocery assistance</li>
+          <li>ID-verified chef</li>
+        </ul>
+        <button class="btn-book" onclick="showPage('find')">Book Now</button>
+      </div>
+      <div class="pricing-card">
+        <span class="pc-icon">📆</span>
+        <div class="pc-type">Monthly</div>
+        <div class="pc-price">₹8,000 <span>/ month</span></div>
+        <div class="pc-desc">Best value. Full-time dedicated chef for your household.</div>
+        <ul class="pc-features">
+          <li>Dedicated chef assigned</li>
+          <li>All meals covered</li>
+          <li>Customized meal plans</li>
+          <li>24/7 WhatsApp support</li>
+        </ul>
+        <button class="btn-book" onclick="showPage('find')">Book Now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="padding:60px 40px;background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;">
+    <div class="section-tag">👨‍🍳 Are You a Chef?</div>
+    <h2 class="section-title">Join BookMyChef & Grow Your Income</h2>
+    <p style="font-size:16px;color:var(--text-muted);max-width:500px;margin:0 auto 32px;line-height:1.7;">
+      Register with us, submit your ID, get verified, and start getting bookings from families in your city.
+    </p>
+    <button class="btn-gold" style="font-size:15px;padding:13px 28px;" onclick="showPage('register')">
+      👨‍🍳 Register as a Chef
+    </button>
+  </section>
+
+</div><!-- /page-home -->
+
+<!-- ─── FIND CHEF PAGE ─── -->
+<div id="page-find" class="page">
+  <div class="find-page">
+
+    <!-- Sidebar Filters -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>Refine Your Search</h3>
+        <button class="clear-btn" onclick="showToast('🔄', 'Filters cleared')">Clear All</button>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Looking For</div>
+        <div class="filter-radio">
+          <label><input type="radio" name="type" checked/><span class="radio-icon">👨‍🍳</span> Chef / Cook</label>
+          <label><input type="radio" name="type"/><span class="radio-icon">🧁</span> Baker</label>
+          <label><input type="radio" name="type"/><span class="radio-icon">🍽️</span> Catering</label>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Location</div>
+        <select class="location-input" id="filter-city" onchange="loadChefs()" style="cursor:pointer;margin-bottom:8px">
+          <option value="Patna">Patna</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Bengaluru">Bengaluru</option>
+          <option value="Kolkata">Kolkata</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Chennai">Chennai</option>
+          <option value="Pune">Pune</option>
+          <option value="Ahmedabad">Ahmedabad</option>
+          <option value="Jaipur">Jaipur</option>
+          <option value="Lucknow">Lucknow</option>
+          <option value="Chandigarh">Chandigarh</option>
+          <option value="Indore">Indore</option>
+          <option value="Bhopal">Bhopal</option>
+          <option value="Nagpur">Nagpur</option>
+          <option value="Varanasi">Varanasi</option>
+          <option value="Agra">Agra</option>
+          <option value="Surat">Surat</option>
+          <option value="Kochi">Kochi</option>
+          <option value="Gurgaon">Gurgaon</option>
+          <option value="Noida">Noida</option>
+          <option value="Ranchi">Ranchi</option>
+          <option value="Bhubaneswar">Bhubaneswar</option>
+          <option value="Guwahati">Guwahati</option>
+        </select>
+        <button onclick="detectLocation()" style="
+          width:100%;padding:8px 12px;background:rgba(212,160,23,0.1);
+          border:1px solid rgba(212,160,23,0.3);color:var(--gold2);
+          border-radius:var(--radius-sm);font-size:12px;font-weight:600;
+          cursor:pointer;transition:all .2s;font-family:inherit;
+        ">📍 Detect My Location</button>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Booking Type</div>
+        <div class="filter-check">
+          <label><input type="checkbox" checked/> Hourly</label>
+          <label><input type="checkbox" checked/> Daily</label>
+          <label><input type="checkbox" checked/> Monthly</label>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Cuisine</div>
+        <div class="filter-check">
+          <label><input type="checkbox" checked/> North Indian</label>
+          <label><input type="checkbox" checked/> South Indian</label>
+          <label><input type="checkbox"/> Bihari Cuisine</label>
+          <label><input type="checkbox"/> Veg Only</label>
+          <label><input type="checkbox"/> Non-Veg</label>
+          <label><input type="checkbox"/> Continental</label>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Budget (Monthly)</div>
+        <input type="range" class="range-input" min="3000" max="20000" value="12000"/>
+        <div class="range-labels"><span>₹3,000</span><span>₹12,000</span></div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">Min. Rating</div>
+        <div class="filter-check">
+          <label><input type="radio" name="rating"/> ★★★★★ 5 stars</label>
+          <label><input type="radio" name="rating" checked/> ★★★★☆ 4+ stars</label>
+          <label><input type="radio" name="rating"/> ★★★☆☆ 3+ stars</label>
+        </div>
+      </div>
+
+      <button class="btn-gold" style="width:100%;justify-content:center;" onclick="showToast('🔍', 'Filters applied!')">
+        Apply Filters
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div class="results-area">
+      <div class="results-header">
+        <div class="results-count"><span id="results-count-num">—</span> Chefs found near <span id="results-city-label" style="color:var(--gold2)">your city</span></div>
+        <select class="sort-select">
+          <option>Sort by: Relevance</option>
+          <option>Rating: High to Low</option>
+          <option>Price: Low to High</option>
+          <option>Distance: Nearest</option>
+          <option>Experience: Most</option>
+        </select>
+      </div>
+
+      <div class="chef-cards" id="chef-cards-container">
+
+        <!-- Chef 1 -->
+        <div class="chef-card" style="position:relative">
+          <button class="btn-save" onclick="toggleSave(this)">🤍</button>
+          <div class="chef-avatar">👩‍🍳</div>
+          <div class="chef-info">
+            <div class="chef-top">
+              <span class="chef-name">Sunita Devi</span>
+              <span class="verified-badge">✓ Verified</span>
+            </div>
+            <div class="chef-sub">Cook · 8 Years Experience · Patna</div>
+            <div class="chef-rating">
+              <span class="stars-small">★★★★★</span>
+              <span class="rating-num">4.8</span>
+              <span class="rating-count">(56 reviews)</span>
+            </div>
+            <div class="chef-tags">
+              <span class="tag">North Indian</span>
+              <span class="tag">Bihari Cuisine</span>
+              <span class="tag">Veg & Non-Veg</span>
+              <span class="tag gold">Top Rated</span>
+            </div>
+            <div class="chef-desc">Experienced in cooking North Indian and Bihari dishes. Can cook for breakfast, lunch & dinner. Specializes in Dal Baati, Litti Chokha, and traditional Bihari thali.</div>
+          </div>
+          <div class="chef-actions">
+            <div class="chef-meta">
+              <div class="meta-item"><span class="meta-icon">📍</span> 2.1 km away</div>
+              <div class="meta-item"><span class="meta-icon">🏘️</span> Kankarbagh, Patna</div>
+              <div class="meta-item"><span class="meta-icon">🕐</span> Full Time</div>
+              <div class="price-range">₹8,000 – ₹10,000/mo</div>
+            </div>
+            <div class="action-btns">
+              <button class="btn-view" onclick="openModal('Sunita Devi', '👩‍🍳', '4.8', '56', 'Kankarbagh, Patna', '8 years', '₹8,000–₹10,000', 'North Indian, Bihari Cuisine, Veg & Non-Veg', 'Experienced in North Indian and Bihari cooking. Specializes in Litti Chokha, Dal Baati and traditional thali. Available for full-time monthly engagement.')">View Details</button>
+              <button class="btn-wa">🟢 WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chef 2 -->
+        <div class="chef-card" style="position:relative">
+          <button class="btn-save" onclick="toggleSave(this)">🤍</button>
+          <div class="chef-avatar">👨‍🍳</div>
+          <div class="chef-info">
+            <div class="chef-top">
+              <span class="chef-name">Ramesh Kumar</span>
+              <span class="verified-badge">✓ Verified</span>
+            </div>
+            <div class="chef-sub">Cook · 5 Years Experience · Patna</div>
+            <div class="chef-rating">
+              <span class="stars-small">★★★★☆</span>
+              <span class="rating-num">4.6</span>
+              <span class="rating-count">(32 reviews)</span>
+            </div>
+            <div class="chef-tags">
+              <span class="tag">North Indian</span>
+              <span class="tag">Veg Only</span>
+              <span class="tag">Baking</span>
+            </div>
+            <div class="chef-desc">Specializes in vegetarian North Indian cooking. Good at dal, sabzi, roti, and rice dishes. Also experienced with light baking for snacks.</div>
+          </div>
+          <div class="chef-actions">
+            <div class="chef-meta">
+              <div class="meta-item"><span class="meta-icon">📍</span> 2.8 km away</div>
+              <div class="meta-item"><span class="meta-icon">🏘️</span> Rajendra Nagar, Patna</div>
+              <div class="meta-item"><span class="meta-icon">🕐</span> Full Time</div>
+              <div class="price-range">₹7,000 – ₹9,000/mo</div>
+            </div>
+            <div class="action-btns">
+              <button class="btn-view" onclick="openModal('Ramesh Kumar', '👨‍🍳', '4.6', '32', 'Rajendra Nagar, Patna', '5 years', '₹7,000–₹9,000', 'North Indian, Veg Only, Baking', 'Specializes in vegetarian North Indian cooking. Good at dal, sabzi, roti, and rice dishes. Also experienced with light baking for snacks.')">View Details</button>
+              <button class="btn-wa">🟢 WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chef 3 -->
+        <div class="chef-card" style="position:relative">
+          <button class="btn-save" onclick="toggleSave(this)">🤍</button>
+          <div class="chef-avatar">👩‍🍳</div>
+          <div class="chef-info">
+            <div class="chef-top">
+              <span class="chef-name">Priya Singh</span>
+              <span class="verified-badge">✓ Verified</span>
+            </div>
+            <div class="chef-sub">Chef · 12 Years Experience · Patna</div>
+            <div class="chef-rating">
+              <span class="stars-small">★★★★★</span>
+              <span class="rating-num">4.9</span>
+              <span class="rating-count">(89 reviews)</span>
+            </div>
+            <div class="chef-tags">
+              <span class="tag">Multi-cuisine</span>
+              <span class="tag">Bihari</span>
+              <span class="tag">Desserts</span>
+              <span class="tag gold">Premium Chef</span>
+            </div>
+            <div class="chef-desc">12 years of professional cooking experience. Expert in Bihari, North & South Indian, and Continental cuisine. Known for delicious sweets and desserts.</div>
+          </div>
+          <div class="chef-actions">
+            <div class="chef-meta">
+              <div class="meta-item"><span class="meta-icon">📍</span> 1.4 km away</div>
+              <div class="meta-item"><span class="meta-icon">🏘️</span> Boring Road, Patna</div>
+              <div class="meta-item"><span class="meta-icon">🕐</span> Full / Part Time</div>
+              <div class="price-range">₹12,000 – ₹15,000/mo</div>
+            </div>
+            <div class="action-btns">
+              <button class="btn-view" onclick="openModal('Priya Singh', '👩‍🍳', '4.9', '89', 'Boring Road, Patna', '12 years', '₹12,000–₹15,000', 'Multi-cuisine, Bihari, Continental, Desserts', '12 years of professional cooking experience. Expert in Bihari, North & South Indian, and Continental cuisine. Known for delicious sweets and desserts.')">View Details</button>
+              <button class="btn-wa">🟢 WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chef 4 -->
+        <div class="chef-card" style="position:relative">
+          <button class="btn-save" onclick="toggleSave(this)">🤍</button>
+          <div class="chef-avatar">👨‍🍳</div>
+          <div class="chef-info">
+            <div class="chef-top">
+              <span class="chef-name">Mohan Prasad</span>
+              <span class="verified-badge">✓ Verified</span>
+            </div>
+            <div class="chef-sub">Cook · 3 Years Experience · Patna</div>
+            <div class="chef-rating">
+              <span class="stars-small">★★★★☆</span>
+              <span class="rating-num">4.3</span>
+              <span class="rating-count">(18 reviews)</span>
+            </div>
+            <div class="chef-tags">
+              <span class="tag">North Indian</span>
+              <span class="tag">Non-Veg</span>
+            </div>
+            <div class="chef-desc">Skilled in North Indian non-veg cooking. Good at chicken curry, mutton dishes, and daily home-cooked food. Friendly and punctual.</div>
+          </div>
+          <div class="chef-actions">
+            <div class="chef-meta">
+              <div class="meta-item"><span class="meta-icon">📍</span> 4.2 km away</div>
+              <div class="meta-item"><span class="meta-icon">🏘️</span> Patliputra Colony</div>
+              <div class="meta-item"><span class="meta-icon">🕐</span> Part Time</div>
+              <div class="price-range">₹5,000 – ₹7,000/mo</div>
+            </div>
+            <div class="action-btns">
+              <button class="btn-view" onclick="openModal('Mohan Prasad', '👨‍🍳', '4.3', '18', 'Patliputra Colony, Patna', '3 years', '₹5,000–₹7,000', 'North Indian, Non-Veg', 'Skilled in North Indian non-veg cooking. Good at chicken curry, mutton dishes, and daily home-cooked food. Friendly and punctual.')">View Details</button>
+              <button class="btn-wa">🟢 WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /chef-cards -->
+    </div><!-- /results-area -->
+  </div>
+</div><!-- /page-find -->
+
+<!-- ─── REGISTER PAGE ─── -->
+<div id="page-register" class="page">
+  <div class="reg-page">
+    <div class="reg-header">
+      <div class="section-tag">👨‍🍳 For Chefs</div>
+      <h1>Register as a Chef</h1>
+      <p>Submit your profile and ID documents. Our team will verify your identity and get you listed within 24–48 hours. Start receiving bookings from families near you!</p>
+    </div>
+
+    <div class="steps-bar">
+      <div class="step-dot active" id="step1-dot">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="step2-dot">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="step3-dot">3</div>
+    </div>
+    <div class="steps-labels">
+      <span class="active-label" id="lbl1">Personal Info</span>
+      <span id="lbl2">Professional Details</span>
+      <span id="lbl3">ID Verification</span>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="form-card" id="reg-step1">
+      <h3>👤 Personal Information</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">First Name <span class="required">*</span></label>
+          <input class="form-input" type="text" id="reg-fname" placeholder="Enter first name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name <span class="required">*</span></label>
+          <input class="form-input" type="text" id="reg-lname" placeholder="Enter last name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number <span class="required">*</span></label>
+          <input class="form-input" type="tel" id="reg-phone" placeholder="+91 XXXXX XXXXX"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="reg-email" placeholder="chef@example.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth <span class="required">*</span></label>
+          <input class="form-input" type="date" id="reg-dob"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender <span class="required">*</span></label>
+          <select class="form-select" id="reg-gender">
+            <option value="">Select gender</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Full Address <span class="required">*</span></label>
+          <textarea class="form-input" id="reg-address" placeholder="House/Flat no., Street, Area, City, State, PIN"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City <span class="required">*</span></label>
+          <select class="form-select" id="reg-city">
+            <option value="">Select your city</option>
+            <option>Patna</option><option>Delhi</option><option>Mumbai</option>
+            <option>Bengaluru</option><option>Kolkata</option><option>Hyderabad</option>
+            <option>Chennai</option><option>Pune</option><option>Ahmedabad</option>
+            <option>Jaipur</option><option>Lucknow</option><option>Chandigarh</option>
+            <option>Indore</option><option>Bhopal</option><option>Nagpur</option>
+            <option>Varanasi</option><option>Agra</option><option>Surat</option>
+            <option>Kochi</option><option>Gurgaon</option><option>Noida</option>
+            <option>Ranchi</option><option>Bhubaneswar</option><option>Guwahati</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN Code <span class="required">*</span></label>
+          <input class="form-input" type="text" id="reg-pin" placeholder="6-digit PIN"/>
+        </div>
+      </div>
+      <div class="form-actions">
+        <div></div>
+        <button class="btn-next" onclick="goStep(2)">Next: Professional Details →</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="form-card" id="reg-step2" style="display:none">
+      <h3>👨‍🍳 Professional Details</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Years of Experience <span class="required">*</span></label>
+          <select class="form-select" id="reg-experience">
+            <option>Less than 1 year</option>
+            <option>1–2 years</option>
+            <option>3–5 years</option>
+            <option>5–10 years</option>
+            <option>10+ years</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Availability <span class="required">*</span></label>
+          <select class="form-select" id="reg-availability">
+            <option>Full Time</option>
+            <option>Part Time</option>
+            <option>Both</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Cuisine Specializations <span class="required">*</span></label>
+          <div class="checkbox-group" id="cuisine-pills">
+            <div class="checkbox-pill" onclick="togglePill(this)">North Indian</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">South Indian</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Bihari Cuisine</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Bengali</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Gujarati</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Punjabi</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Continental</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Chinese</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Veg Only</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Non-Veg</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Desserts & Sweets</div>
+            <div class="checkbox-pill" onclick="togglePill(this)">Baking</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Booking Types Available <span class="required">*</span></label>
+          <div class="checkbox-group" id="booking-pills">
+            <div class="checkbox-pill" onclick="togglePill(this)">Hourly</div>
+            <div class="checkbox-pill selected" onclick="togglePill(this)">Daily</div>
+            <div class="checkbox-pill selected" onclick="togglePill(this)">Monthly</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Monthly Rate (₹)</label>
+          <input class="form-input" type="number" id="reg-monthly-rate" placeholder="e.g. 8000"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Hourly Rate (₹)</label>
+          <input class="form-input" type="number" id="reg-hourly-rate" placeholder="e.g. 150"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">About Yourself</label>
+          <textarea class="form-input" id="reg-about" placeholder="Describe your cooking style, specialties, and experience..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-back" onclick="goStep(1)">← Back</button>
+        <button class="btn-next" onclick="goStep(3)">Next: ID Verification →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="form-card" id="reg-step3" style="display:none">
+      <h3>🪪 ID Verification</h3>
+
+      <div class="info-box">
+        <span class="info-box-icon">ℹ️</span>
+        <div class="info-box-text">
+          We verify all chef IDs before listing them. Your documents are kept safe and confidential. Only your <strong>verified status</strong> is shown to customers — not the actual documents.
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">ID Type <span class="required">*</span></label>
+          <select class="form-select" id="reg-id-type">
+            <option value="">Select ID type</option>
+            <option>Aadhaar Card</option>
+            <option>PAN Card</option>
+            <option>Voter ID</option>
+            <option>Driving Licence</option>
+            <option>Passport</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ID Number <span class="required">*</span></label>
+          <input class="form-input" type="text" id="reg-id-number" placeholder="Enter ID number"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Upload ID (Front) <span class="required">*</span></label>
+          <input type="file" id="file-id-front" accept="image/*,.pdf" style="display:none" onchange="previewFile(this,'prev-id-front','icon-id-front','text-id-front')"/>
+          <div class="upload-box" onclick="document.getElementById('file-id-front').click()">
+            <span class="upload-icon" id="icon-id-front">📄</span>
+            <div class="upload-text" id="text-id-front">Click to upload front of ID</div>
+            <div class="upload-sub">JPG, PNG or PDF · Max 5MB</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Upload ID (Back)</label>
+          <input type="file" id="file-id-back" accept="image/*,.pdf" style="display:none" onchange="previewFile(this,'prev-id-back','icon-id-back','text-id-back')"/>
+          <div class="upload-box" onclick="document.getElementById('file-id-back').click()">
+            <span class="upload-icon" id="icon-id-back">📄</span>
+            <div class="upload-text" id="text-id-back">Click to upload back of ID</div>
+            <div class="upload-sub">JPG, PNG or PDF · Max 5MB</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Selfie / Profile Photo <span class="required">*</span></label>
+          <input type="file" id="file-selfie" accept="image/*" style="display:none" onchange="previewFile(this,'prev-selfie','icon-selfie','text-selfie')"/>
+          <div class="upload-box" onclick="document.getElementById('file-selfie').click()">
+            <span class="upload-icon" id="icon-selfie">🤳</span>
+            <div class="upload-text" id="text-selfie">Upload a clear photo of yourself</div>
+            <div class="upload-sub">JPG or PNG · Max 3MB · Face clearly visible</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label" style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;">
+            <input type="checkbox" style="accent-color:var(--gold);width:16px;height:16px;"/>
+            I agree to the <a href="#" style="color:var(--gold2);margin:0 4px;">Terms & Conditions</a> and confirm that all information provided is accurate.
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-back" onclick="goStep(2)">← Back</button>
+        <button class="btn-next" onclick="submitReg()">✅ Submit for Verification</button>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="form-card success-state" id="reg-success" style="display:none">
+      <span class="success-icon">🎉</span>
+      <h2>Application Submitted!</h2>
+      <p>Thank you for registering with BookMyChef! Our team will review your ID documents and verify your profile within <strong style="color:var(--gold2)">24–48 hours</strong>. We'll contact you on WhatsApp once you're approved.</p>
+      <button class="btn-gold" style="margin:0 auto;font-size:15px;padding:12px 28px;" onclick="showPage('home')">
+        🏠 Back to Home
+      </button>
+    </div>
+
+  </div>
+</div><!-- /page-register -->
+
+<!-- ─── ABOUT PAGE ─── -->
+<div id="page-about" class="page">
+
+  <div class="about-hero">
+    <div class="section-tag">🏠 Our Story</div>
+    <h1>We're Solving <span style="color:var(--gold2)">Real Problems</span><br/>in Indian Homes</h1>
+    <p>BookMyChef was born from a simple idea: every family deserves access to a trustworthy, skilled chef — verified, local, and affordable. We're starting from Patna and growing city by city.</p>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num">🚀</div>
+        <div class="stat-lbl">Just Launched</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">100%</div>
+        <div class="stat-lbl">ID Verified Chefs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">Patna</div>
+        <div class="stat-lbl">Starting City</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">₹0</div>
+        <div class="stat-lbl">Platform Fee</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mission-section">
+    <div class="mission-left">
+      <div class="section-tag">🎯 Our Mission</div>
+      <h2>Bringing Verified Chefs to <span style="color:var(--gold2)">Every Home</span></h2>
+      <p>We started in Patna with a simple mission: make it easy for families to find reliable, ID-verified chefs in their own neighbourhood. No guesswork. No strangers. Just trusted professionals.</p>
+      <p>Every chef on our platform goes through a strict verification process — government ID check, background screening, and skills assessment — before they can accept a single booking.</p>
+    </div>
+    <div class="mission-right">
+      <div class="mission-point">
+        <div class="mp-icon">🪪</div>
+        <div class="mp-text">
+          <h4>ID Verification</h4>
+          <p>Every chef submits Aadhaar/PAN. Our team manually verifies each document before approval.</p>
+        </div>
+      </div>
+      <div class="mission-point">
+        <div class="mp-icon">⭐</div>
+        <div class="mp-text">
+          <h4>Rating & Reviews</h4>
+          <p>Customers rate chefs after every engagement, keeping quality high and accountability real.</p>
+        </div>
+      </div>
+      <div class="mission-point">
+        <div class="mp-icon">🛡️</div>
+        <div class="mp-text">
+          <h4>Safe & Transparent</h4>
+          <p>Your chef's ID status is visible, but actual documents are kept private and encrypted.</p>
+        </div>
+      </div>
+      <div class="mission-point">
+        <div class="mp-icon">💬</div>
+        <div class="mp-text">
+          <h4>WhatsApp Support</h4>
+          <p>Direct WhatsApp connection with your chef. Simple, fast, and personal communication.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team -->
+  <div class="team-section">
+    <div class="section-tag">👥 The Team</div>
+    <h2 class="section-title">Built with ❤️ in Patna</h2>
+    <div class="team-grid" style="justify-content:center">
+      <div class="team-card">
+        <div class="team-avatar">S</div>
+        <div class="team-name">Snehil Jha</div>
+        <div class="team-role">Founder & CEO</div>
+        <div class="team-bio">Building BookMyChef from Patna — making it easy for every family to find a trusted, verified chef at their doorstep.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-about -->
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo" style="margin-bottom:14px">
+        <div class="logo-icon">👨‍🍳</div>
+        <div class="logo-text">
+          <span class="logo-name">BookMyChef</span>
+          <span class="logo-tagline">Trusted chefs at your doorstep</span>
+        </div>
+      </div>
+      <div class="footer-desc">
+        Connecting verified chefs with families across India. Book by the hour, day, or month. Safe, reliable, and affordable.
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a onclick="showPage('home')">Home</a></li>
+        <li><a onclick="showPage('find')">Find a Chef</a></li>
+        <li><a onclick="showPage('register')">Register as Chef</a></li>
+        <li><a onclick="showPage('about')">About Us</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Booking</h4>
+      <ul>
+        <li><a>Hourly Booking</a></li>
+        <li><a>Daily Booking</a></li>
+        <li><a>Monthly Booking</a></li>
+        <li><a>Event Catering</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a>Contact Us</a></li>
+        <li><a>WhatsApp: +91 98765 43210</a></li>
+        <li><a>Privacy Policy</a></li>
+        <li><a>Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 BookMyChef. Made with ❤️ in Patna, Bihar.</p>
+    <div class="footer-socials">
+      <a class="social-btn">📘</a>
+      <a class="social-btn">📸</a>
+      <a class="social-btn">🐦</a>
+      <a class="social-btn">💼</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Chef Detail Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Chef Profile</h3>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-chef-header">
+      <div class="modal-chef-avatar" id="modal-avatar">👩‍🍳</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:20px;font-weight:800;" id="modal-name">Chef Name</span>
+          <span class="verified-badge">✓ Verified</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted)" id="modal-sub">Cook</div>
+        <div class="chef-rating" style="margin-top:6px;margin-bottom:0">
+          <span class="stars-small">★★★★★</span>
+          <span class="rating-num" id="modal-rating">4.8</span>
+          <span class="rating-count" id="modal-reviews">(56 reviews)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section-title">Details</div>
+    <div class="modal-detail-grid">
+      <div class="modal-detail">
+        <div class="md-label">📍 Location</div>
+        <div class="md-value" id="modal-location">Patna</div>
+      </div>
+      <div class="modal-detail">
+        <div class="md-label">🕐 Experience</div>
+        <div class="md-value" id="modal-exp">5 years</div>
+      </div>
+      <div class="modal-detail">
+        <div class="md-label">💰 Rate (Monthly)</div>
+        <div class="md-value" id="modal-price" style="color:var(--gold2)">₹8,000–₹10,000</div>
+      </div>
+      <div class="modal-detail">
+        <div class="md-label">🪪 ID Verified</div>
+        <div class="md-value" style="color:var(--green)">✓ Yes</div>
+      </div>
+    </div>
+
+    <div class="modal-section-title">Specializations</div>
+    <div class="chef-tags" id="modal-tags" style="margin-bottom:0"></div>
+
+    <div class="modal-section-title">About</div>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.7" id="modal-about"></p>
+
+    <button class="btn-book-now" id="modal-book-btn">
+      📅 Book This Chef
+    </button>
+    <button class="btn-wa" style="width:100%;margin-top:10px;padding:11px" onclick="showToast('🟢', 'Opening WhatsApp...')">
+      🟢 Contact on WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- ── BOOKING MODAL ── -->
+<div id="bm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center" onclick="if(event.target===this)closeBooking()">
+  <div style="background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:32px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;margin:16px">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <div style="font-size:18px;font-weight:800" id="bm-chef-name">Book Chef</div>
+        <div style="font-size:13px;color:#a0a0a0;margin-top:2px" id="bm-chef-city"></div>
+      </div>
+      <button onclick="closeBooking()" style="background:none;border:none;color:#a0a0a0;font-size:22px;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Booking Type -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Booking Type</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="bm-type-btns">
+        <button class="bm-type-btn" data-type="hourly" onclick="selectBookingType('hourly',this)" style="padding:12px 8px;border-radius:10px;border:1px solid rgba(212,160,23,0.5);background:rgba(212,160,23,0.1);color:#f0c040;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">⏰ Hourly</button>
+        <button class="bm-type-btn" data-type="daily" onclick="selectBookingType('daily',this)" style="padding:12px 8px;border-radius:10px;border:1px solid #333;background:transparent;color:#a0a0a0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📅 Daily</button>
+        <button class="bm-type-btn" data-type="monthly" onclick="selectBookingType('monthly',this)" style="padding:12px 8px;border-radius:10px;border:1px solid #333;background:transparent;color:#a0a0a0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🗓️ Monthly</button>
+      </div>
+    </div>
+
+    <!-- Start Date -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Start Date</div>
+      <input type="date" id="bm-start-date" onchange="calcTotal()" style="width:100%;padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit"/>
+    </div>
+
+    <!-- Duration -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px" id="bm-duration-label">Duration (hours)</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <button onclick="changeDuration(-1)" style="width:40px;height:40px;border-radius:8px;border:1px solid #333;background:#242424;color:#f0f0f0;font-size:18px;cursor:pointer">−</button>
+        <span id="bm-duration-val" style="font-size:28px;font-weight:800;min-width:40px;text-align:center">4</span>
+        <button onclick="changeDuration(1)" style="width:40px;height:40px;border-radius:8px;border:1px solid #333;background:#242424;color:#f0f0f0;font-size:18px;cursor:pointer">+</button>
+        <span id="bm-duration-unit" style="font-size:14px;color:#a0a0a0">hours</span>
+      </div>
+    </div>
+
+    <!-- Customer Details -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Your Details</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="bm-cust-name" type="text" placeholder="Your full name" style="padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit;width:100%"/>
+        <input id="bm-cust-phone" type="tel" placeholder="Your phone number (10 digits)" maxlength="10" style="padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit;width:100%"/>
+        <input id="bm-cust-email" type="email" placeholder="Your email (for confirmation)" style="padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit;width:100%"/>
+        <select id="bm-cust-city" style="padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit;width:100%">
+          <option value="">— Select your city —</option>
+          <option>Patna</option><option>Delhi</option><option>Mumbai</option><option>Bengaluru</option>
+          <option>Kolkata</option><option>Hyderabad</option><option>Chennai</option><option>Pune</option>
+          <option>Ahmedabad</option><option>Jaipur</option><option>Lucknow</option><option>Chandigarh</option>
+          <option>Indore</option><option>Bhopal</option><option>Nagpur</option><option>Varanasi</option>
+          <option>Agra</option><option>Surat</option><option>Kochi</option><option>Gurgaon</option>
+          <option>Noida</option><option>Ranchi</option><option>Bhubaneswar</option><option>Guwahati</option>
+        </select>
+        <textarea id="bm-cust-address" placeholder="Your full address (street, area, landmark)" rows="2" style="padding:12px 16px;background:#242424;border:1px solid #333;border-radius:10px;color:#f0f0f0;font-size:14px;outline:none;font-family:inherit;width:100%;resize:none"></textarea>
+      </div>
+    </div>
+
+    <!-- Price Summary -->
+    <div style="background:#242424;border-radius:12px;padding:16px;margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#a0a0a0;margin-bottom:8px">
+        <span id="bm-price-label">Rate</span>
+        <span id="bm-rate-display">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#a0a0a0;margin-bottom:8px">
+        <span>Duration</span><span id="bm-duration-display">—</span>
+      </div>
+      <div style="border-top:1px solid #333;padding-top:10px;margin-top:4px;display:flex;justify-content:space-between">
+        <span style="font-weight:700">Total Amount</span>
+        <span style="font-size:20px;font-weight:800;color:#f0c040" id="bm-total-display">₹0</span>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button id="bm-submit-btn" onclick="confirmBooking()" style="width:100%;padding:15px;background:linear-gradient(135deg,#d4a017,#f0c040);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit">
+      📅 Request Booking
+    </button>
+    <p style="text-align:center;font-size:12px;color:#6b6b6b;margin-top:10px">
+      Chef will confirm via WhatsApp · Payment in Phase 6
+    </p>
+  </div>
+</div>
+
+<!-- Booking Success -->
+<div id="bm-success-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(6px);z-index:700;align-items:center;justify-content:center">
+  <div style="background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:40px;width:100%;max-width:420px;text-align:center;margin:16px">
+    <div style="font-size:60px;margin-bottom:16px">🎉</div>
+    <h2 style="color:#f0c040;font-size:22px;font-weight:800;margin-bottom:8px">Booking Request Sent!</h2>
+    <p style="color:#a0a0a0;font-size:14px;margin-bottom:24px">The chef will contact you on WhatsApp within 2 hours to confirm your booking.</p>
+    <div style="background:#242424;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left">
+      <div style="font-size:12px;color:#6b6b6b;margin-bottom:4px">Booking ID</div>
+      <div id="bm-confirm-id" style="font-size:14px;font-weight:700;color:#f0f0f0;word-break:break-all"></div>
+      <div style="font-size:12px;color:#6b6b6b;margin-top:10px;margin-bottom:4px">Chef</div>
+      <div id="bm-confirm-chef" style="font-size:14px;font-weight:700;color:#f0f0f0"></div>
+      <div style="font-size:12px;color:#6b6b6b;margin-top:10px;margin-bottom:4px">Booking Details</div>
+      <div id="bm-confirm-details" style="font-size:13px;color:#a0a0a0"></div>
+    </div>
+    <button onclick="closeBookingSuccess()" style="width:100%;padding:13px;background:linear-gradient(135deg,#d4a017,#f0c040);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Done</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toast-icon" class="toast-icon">✅</span>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<script>
+  // ── Firebase Init ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFvgp21s09KDVK6rv3Ay7TDnRg8l079Wk",
+    authDomain: "bookmychef-6475d.firebaseapp.com",
+    projectId: "bookmychef-6475d",
+    storageBucket: "bookmychef-6475d.firebasestorage.app",
+    messagingSenderId: "397815258611",
+    appId: "1:397815258611:web:1c68d76df5be25af350686"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ── Cloudinary Config ──
+  const CLOUDINARY_CLOUD = 'dzj0oqb9e';
+  const CLOUDINARY_PRESET = 'bookmychef_uploads';
+
+  async function uploadToCloudinary(file) {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+      method: 'POST', body: formData
+    });
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  // ── Page Navigation ──
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const navEl = document.getElementById('nav-' + page);
+    if (navEl) navEl.classList.add('active');
+    if (page === 'find') loadChefs();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Global chef store ──
+  window._loadedChefs = {};  // keyed by Firestore doc ID
+  let _currentChef = null;   // chef currently open in modal
+
+  // ── Load Chefs from Firestore filtered by city ──
+  async function loadChefs() {
+    const container = document.getElementById('chef-cards-container');
+    const citySelect = document.getElementById('filter-city');
+    const selectedCity = citySelect ? citySelect.value : 'Patna';
+
+    // Update results header
+    const cityLabel = document.getElementById('results-city-label');
+    if (cityLabel) cityLabel.textContent = selectedCity;
+
+    // Show loading
+    container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted)">⏳ Loading chefs in ${selectedCity}...</div>`;
+
+    try {
+      const snap = await db.collection('chefs')
+        .where('status', '==', 'verified')
+        .where('city', '==', selectedCity)
+        .get();
+
+      const countEl = document.getElementById('results-count-num');
+
+      if (snap.empty) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:80px 40px">
+            <div style="font-size:64px;margin-bottom:20px">👨‍🍳</div>
+            <h3 style="font-size:22px;font-weight:800;margin-bottom:10px">No chefs in ${selectedCity} yet</h3>
+            <p style="color:var(--text-muted);font-size:15px;margin-bottom:24px">We're onboarding chefs in ${selectedCity} soon.<br/>Are you a chef? Register below and be the first!</p>
+            <button onclick="showPage('register')" style="padding:12px 28px;background:linear-gradient(135deg,#d4a017,#f0c040);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Register as Chef →</button>
+          </div>`;
+        if (countEl) countEl.textContent = '0';
+        return;
+      }
+
+      // Real chefs found — render them
+      container.innerHTML = '';
+      window._loadedChefs = {};
+      let count = 0;
+
+      snap.forEach(doc => {
+        const c = { id: doc.id, ...doc.data() };
+        window._loadedChefs[doc.id] = c;
+        count++;
+
+        const selfieHTML = c.selfieUrl
+          ? `<img src="${c.selfieUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius)" onerror="this.style.display='none'"/>`
+          : '👨‍🍳';
+
+        container.innerHTML += `
+          <div class="chef-card" style="position:relative">
+            <button class="btn-save" onclick="toggleSave(this)">🤍</button>
+            <div class="chef-avatar" style="overflow:hidden">${selfieHTML}</div>
+            <div class="chef-info">
+              <div class="chef-top">
+                <span class="chef-name">${c.firstName || ''} ${c.lastName || ''}</span>
+                <span class="verified-badge">✓ Verified</span>
+              </div>
+              <div class="chef-sub">Cook · ${c.experience || ''} Experience · ${c.city || ''}</div>
+              <div class="chef-rating">
+                <span class="stars-small">★★★★★</span>
+                <span class="rating-num">${c.rating || 'New'}</span>
+                <span class="rating-count">(${c.reviews || 0} reviews)</span>
+              </div>
+              <div class="chef-tags">
+                ${(c.cuisines||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}
+              </div>
+              <div class="chef-desc">${c.about || 'Experienced chef ready to cook for your family.'}</div>
+            </div>
+            <div class="chef-actions">
+              <div class="chef-meta">
+                <div class="meta-item">📍 ${c.city || ''}</div>
+                <div class="meta-item">🕐 ${c.availability || 'Full Time'}</div>
+                <div class="price-range">₹${c.monthlyRate || '?'}/mo</div>
+              </div>
+              <div class="action-btns">
+                <button class="btn-view" onclick="openChefModal('${doc.id}')">View Details</button>
+                <button class="btn-wa" onclick="window.open('https://wa.me/91${c.phone}','_blank')">🟢 WhatsApp</button>
+              </div>
+            </div>
+          </div>`;
+      });
+
+      if (countEl) countEl.textContent = count;
+
+    } catch(e) {
+      console.error('Error loading chefs:', e);
+      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">❌ Error loading chefs. Please refresh.</div>`;
+    }
+  }
+
+  // Open modal for a real chef (from Firestore)
+  function openChefModal(chefId) {
+    const c = window._loadedChefs[chefId];
+    if (!c) return;
+    _currentChef = c;
+
+    const selfieHTML = c.selfieUrl
+      ? `<img src="${c.selfieUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius)" onerror="this.style.display='none'"/>`
+      : '👨‍🍳';
+
+    document.getElementById('modal-avatar').innerHTML = selfieHTML;
+    document.getElementById('modal-name').textContent = (c.firstName||'') + ' ' + (c.lastName||'');
+    document.getElementById('modal-sub').textContent = 'Cook · ' + (c.experience||'') + ' Experience';
+    document.getElementById('modal-rating').textContent = c.rating || 'New';
+    document.getElementById('modal-reviews').textContent = '(' + (c.reviews||0) + ' reviews)';
+    document.getElementById('modal-location').textContent = c.city || '—';
+    document.getElementById('modal-exp').textContent = c.experience || '—';
+    document.getElementById('modal-price').textContent = '₹' + (c.monthlyRate||'?') + '/mo';
+    document.getElementById('modal-about').textContent = c.about || '—';
+    const tagsEl = document.getElementById('modal-tags');
+    tagsEl.innerHTML = (c.cuisines||[]).map(t=>`<span class="tag">${t.trim()}</span>`).join('');
+
+    // Show Book button (real chef)
+    document.getElementById('modal-book-btn').textContent = '📅 Book This Chef';
+    document.getElementById('modal-book-btn').onclick = function() { closeModalDirect(); openBooking(c); };
+
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Auto-detect customer location
+  function detectLocation() {
+    const btn = event.target;
+    btn.textContent = '⏳ Detecting...';
+    btn.disabled = true;
+
+    if (!navigator.geolocation) {
+      showToast('❌', 'Location not supported by your browser.');
+      btn.textContent = '📍 Detect My Location';
+      btn.disabled = false;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+          const data = await res.json();
+          const detectedCity = data.address?.city || data.address?.town || data.address?.county || '';
+
+          // Match to our city list
+          const citySelect = document.getElementById('filter-city');
+          const options = Array.from(citySelect.options);
+          const match = options.find(o => detectedCity.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(detectedCity.toLowerCase()));
+
+          if (match) {
+            citySelect.value = match.value;
+            showToast('📍', 'Location detected: ' + match.value);
+            loadChefs();
+          } else {
+            showToast('📍', 'Detected: ' + detectedCity + ' (not in our cities yet)');
+          }
+        } catch(e) {
+          showToast('❌', 'Could not detect city. Please select manually.');
+        }
+        btn.textContent = '📍 Detect My Location';
+        btn.disabled = false;
+      },
+      function(error) {
+        showToast('❌', 'Location access denied. Please select city manually.');
+        btn.textContent = '📍 Detect My Location';
+        btn.disabled = false;
+      }
+    );
+  }
+
+  // ── Type selector in hero ──
+  function selectType(el, type) {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Save toggle ──
+  function toggleSave(btn) {
+    if (btn.textContent === '🤍') {
+      btn.textContent = '❤️';
+      showToast('❤️', 'Chef saved to your list!');
+    } else {
+      btn.textContent = '🤍';
+      showToast('💔', 'Chef removed from saved list.');
+    }
+  }
+
+  // ── Cuisine pills ──
+  function togglePill(el) {
+    el.classList.toggle('selected');
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(icon, msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-icon').textContent = icon;
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Modal (for sample/hardcoded chefs) ──
+  function openModal(name, avatar, rating, reviews, location, exp, price, tags, about) {
+    _currentChef = null; // sample chef — no booking
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-avatar').innerHTML = avatar;
+    document.getElementById('modal-sub').textContent = 'Cook · ' + exp + ' Experience';
+    document.getElementById('modal-rating').textContent = rating;
+    document.getElementById('modal-reviews').textContent = '(' + reviews + ' reviews)';
+    document.getElementById('modal-location').textContent = location;
+    document.getElementById('modal-exp').textContent = exp;
+    document.getElementById('modal-price').textContent = price;
+    document.getElementById('modal-about').textContent = about;
+    const tagsEl = document.getElementById('modal-tags');
+    tagsEl.innerHTML = tags.split(',').map(t => `<span class="tag">${t.trim()}</span>`).join('');
+    // Sample chef — show WhatsApp button only
+    document.getElementById('modal-book-btn').textContent = '💬 Contact on WhatsApp to Book';
+    document.getElementById('modal-book-btn').onclick = function() { showToast('🟢', 'Contact via WhatsApp to book this chef.'); };
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModalDirect() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+  }
+
+  // ── File Preview ──
+  function previewFile(input, previewId, iconId, textId) {
+    if (input.files && input.files[0]) {
+      document.getElementById(iconId).textContent = '✅';
+      document.getElementById(textId).textContent = input.files[0].name;
+    }
+  }
+
+  // ── Registration Steps ──
+  let currentStep = 1;
+  function goStep(step) {
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('reg-step' + i).style.display = 'none';
+      const dot = document.getElementById('step' + i + '-dot');
+      const lbl = document.getElementById('lbl' + i);
+      dot.classList.remove('active', 'done');
+      lbl.classList.remove('active-label');
+      if (i < step) {
+        dot.classList.add('done'); dot.textContent = '✓';
+        if (i < 3) document.getElementById('line' + i).classList.add('done');
+      } else if (i === step) {
+        dot.classList.add('active'); dot.textContent = i;
+        lbl.classList.add('active-label');
+      } else {
+        dot.textContent = i;
+        if (i > 1) document.getElementById('line' + (i-1)).classList.remove('done');
+      }
+    }
+    document.getElementById('reg-step' + step).style.display = 'block';
+    currentStep = step;
+    for (let l = 1; l <= 2; l++) {
+      if (l < step) document.getElementById('line' + l).classList.add('done');
+      else document.getElementById('line' + l).classList.remove('done');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Submit Registration → Firebase + Cloudinary ──
+  async function submitReg() {
+    const submitBtn = document.querySelector('#reg-step3 .btn-next');
+    submitBtn.textContent = '⏳ Uploading...';
+    submitBtn.disabled = true;
+
+    try {
+      // Get cuisines selected
+      const cuisines = [...document.querySelectorAll('#cuisine-pills .checkbox-pill.selected')].map(el => el.textContent);
+      const bookingTypes = [...document.querySelectorAll('#booking-pills .checkbox-pill.selected')].map(el => el.textContent);
+
+      // Upload photos to Cloudinary
+      showToast('📤', 'Uploading photos...');
+      const idFrontFile = document.getElementById('file-id-front').files[0];
+      const idBackFile  = document.getElementById('file-id-back').files[0];
+      const selfieFile  = document.getElementById('file-selfie').files[0];
+
+      const [idFrontUrl, idBackUrl, selfieUrl] = await Promise.all([
+        uploadToCloudinary(idFrontFile),
+        uploadToCloudinary(idBackFile),
+        uploadToCloudinary(selfieFile)
+      ]);
+
+      // Save to Firestore
+      showToast('💾', 'Saving your profile...');
+      await db.collection('chefs').add({
+        firstName:   document.getElementById('reg-fname').value,
+        lastName:    document.getElementById('reg-lname').value,
+        phone:       document.getElementById('reg-phone').value,
+        email:       document.getElementById('reg-email').value,
+        dob:         document.getElementById('reg-dob').value,
+        gender:      document.getElementById('reg-gender').value,
+        address:     document.getElementById('reg-address').value,
+        city:        document.getElementById('reg-city').value,
+        pin:         document.getElementById('reg-pin').value,
+        experience:  document.getElementById('reg-experience').value,
+        availability:document.getElementById('reg-availability').value,
+        cuisines:    cuisines,
+        bookingTypes:bookingTypes,
+        monthlyRate: document.getElementById('reg-monthly-rate').value,
+        hourlyRate:  document.getElementById('reg-hourly-rate').value,
+        about:       document.getElementById('reg-about').value,
+        idType:      document.getElementById('reg-id-type').value,
+        idNumber:    document.getElementById('reg-id-number').value,
+        idFrontUrl:  idFrontUrl,
+        idBackUrl:   idBackUrl,
+        selfieUrl:   selfieUrl,
+        status:      'pending',
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Show success
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('reg-step' + i).style.display = 'none';
+        const dot = document.getElementById('step' + i + '-dot');
+        dot.classList.remove('active');
+        dot.classList.add('done');
+        dot.textContent = '✓';
+      }
+      document.getElementById('line1').classList.add('done');
+      document.getElementById('line2').classList.add('done');
+      document.getElementById('reg-success').style.display = 'block';
+      showToast('🎉', 'Registration submitted! We\'ll verify within 24 hours.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error(err);
+      showToast('❌', 'Error: ' + err.message);
+      submitBtn.textContent = '✅ Submit for Verification';
+      submitBtn.disabled = false;
+    }
+  }
+  // ── BOOKING SYSTEM ──
+  let _bookingChef = null;
+  let _bookingType = 'hourly';
+  let _bookingDuration = 4;
+
+  function openBooking(chef) {
+    _bookingChef = chef;
+    _bookingType = 'hourly';
+    _bookingDuration = 4;
+
+    document.getElementById('bm-chef-name').textContent = (chef.firstName||'') + ' ' + (chef.lastName||'');
+    document.getElementById('bm-chef-city').textContent = '📍 ' + (chef.city||'');
+
+    // Set min date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bm-start-date').min = today;
+    document.getElementById('bm-start-date').value = today;
+
+    // Reset type buttons
+    document.querySelectorAll('.bm-type-btn').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = '#a0a0a0';
+      b.style.border = '1px solid #333';
+    });
+    document.querySelector('.bm-type-btn[data-type="hourly"]').style.cssText += ';background:rgba(212,160,23,0.1);color:#f0c040;border:1px solid rgba(212,160,23,0.5)';
+
+    // Reset duration
+    _bookingDuration = 4;
+    document.getElementById('bm-duration-val').textContent = 4;
+    document.getElementById('bm-duration-label').textContent = 'Duration (hours)';
+    document.getElementById('bm-duration-unit').textContent = 'hours';
+
+    // Clear customer fields
+    ['bm-cust-name','bm-cust-phone','bm-cust-email','bm-cust-address'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    // Pre-select chef's city for customer (they must be in same city)
+    const citySelect = document.getElementById('bm-cust-city');
+    if (citySelect && chef.city) {
+      citySelect.value = chef.city;
+    } else if (citySelect) {
+      citySelect.value = '';
+    }
+
+    calcTotal();
+
+    const overlay = document.getElementById('bm-overlay');
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeBooking() {
+    document.getElementById('bm-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function selectBookingType(type, btn) {
+    _bookingType = type;
+    document.querySelectorAll('.bm-type-btn').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = '#a0a0a0';
+      b.style.border = '1px solid #333';
+    });
+    btn.style.background = 'rgba(212,160,23,0.1)';
+    btn.style.color = '#f0c040';
+    btn.style.border = '1px solid rgba(212,160,23,0.5)';
+
+    if (type === 'hourly') {
+      _bookingDuration = 4;
+      document.getElementById('bm-duration-label').textContent = 'Duration (hours)';
+      document.getElementById('bm-duration-unit').textContent = 'hours';
+    } else if (type === 'daily') {
+      _bookingDuration = 1;
+      document.getElementById('bm-duration-label').textContent = 'Duration (days)';
+      document.getElementById('bm-duration-unit').textContent = 'days';
+    } else {
+      _bookingDuration = 1;
+      document.getElementById('bm-duration-label').textContent = 'Duration (months)';
+      document.getElementById('bm-duration-unit').textContent = 'months';
+    }
+    document.getElementById('bm-duration-val').textContent = _bookingDuration;
+    calcTotal();
+  }
+
+  function changeDuration(delta) {
+    _bookingDuration = Math.max(1, _bookingDuration + delta);
+    document.getElementById('bm-duration-val').textContent = _bookingDuration;
+    calcTotal();
+  }
+
+  function calcTotal() {
+    if (!_bookingChef) return;
+    let rate = 0, unitLabel = '', rateLabel = '';
+
+    if (_bookingType === 'hourly') {
+      rate = Number(_bookingChef.hourlyRate) || 0;
+      unitLabel = _bookingDuration + (_bookingDuration === 1 ? ' hour' : ' hours');
+      rateLabel = '₹' + rate + '/hr';
+    } else if (_bookingType === 'daily') {
+      rate = Number(_bookingChef.dailyRate) || (Number(_bookingChef.hourlyRate) * 8) || 0;
+      unitLabel = _bookingDuration + (_bookingDuration === 1 ? ' day' : ' days');
+      rateLabel = '₹' + rate + '/day';
+    } else {
+      rate = Number(_bookingChef.monthlyRate) || 0;
+      unitLabel = _bookingDuration + (_bookingDuration === 1 ? ' month' : ' months');
+      rateLabel = '₹' + rate + '/month';
+    }
+
+    const total = rate * _bookingDuration;
+    document.getElementById('bm-rate-display').textContent = rateLabel || '—';
+    document.getElementById('bm-duration-display').textContent = unitLabel;
+    document.getElementById('bm-total-display').textContent = '₹' + total.toLocaleString('en-IN');
+    document.getElementById('bm-price-label').textContent = _bookingType === 'hourly' ? 'Hourly rate' : _bookingType === 'daily' ? 'Daily rate' : 'Monthly rate';
+  }
+
+  async function confirmBooking() {
+    const custName    = document.getElementById('bm-cust-name').value.trim();
+    const custPhone   = document.getElementById('bm-cust-phone').value.trim();
+    const custEmail   = document.getElementById('bm-cust-email').value.trim();
+    const custCity    = document.getElementById('bm-cust-city').value;
+    const custAddress = document.getElementById('bm-cust-address').value.trim();
+    const startDate   = document.getElementById('bm-start-date').value;
+
+    if (!custName)  { showToast('⚠️', 'Please enter your name.'); return; }
+    if (!custPhone || custPhone.length < 10) { showToast('⚠️', 'Please enter a valid 10-digit phone number.'); return; }
+    if (!custCity)  { showToast('⚠️', 'Please select your city.'); return; }
+    if (!startDate) { showToast('⚠️', 'Please select a start date.'); return; }
+
+    // ── City match check ──
+    const chefCity = (_bookingChef.city || '').trim().toLowerCase();
+    const customerCity = custCity.trim().toLowerCase();
+    if (chefCity && customerCity !== chefCity) {
+      showToast('❌', `This chef is in ${_bookingChef.city}. You must be in the same city to book.`);
+      return;
+    }
+
+    const btn = document.getElementById('bm-submit-btn');
+    btn.textContent = '⏳ Checking availability...';
+    btn.disabled = true;
+
+    // ── Double booking check ──
+    try {
+      const existing = await db.collection('bookings')
+        .where('chefId', '==', _bookingChef.id)
+        .where('startDate', '==', startDate)
+        .where('status', '==', 'pending')
+        .get();
+
+      if (!existing.empty) {
+        showToast('❌', 'Chef is already booked on this date. Please choose another date.');
+        btn.textContent = '📅 Request Booking';
+        btn.disabled = false;
+        return;
+      }
+    } catch(e) { /* ignore — proceed if check fails */ }
+
+    let amount = 0;
+    if (_bookingType === 'hourly')  amount = (Number(_bookingChef.hourlyRate)||0)  * _bookingDuration;
+    if (_bookingType === 'daily')   amount = ((Number(_bookingChef.dailyRate)||(Number(_bookingChef.hourlyRate)*8))||0) * _bookingDuration;
+    if (_bookingType === 'monthly') amount = (Number(_bookingChef.monthlyRate)||0) * _bookingDuration;
+
+    btn.textContent = '⏳ Saving booking...';
+
+    try {
+      const docRef = await db.collection('bookings').add({
+        chefId:          _bookingChef.id,
+        chefName:        (_bookingChef.firstName||'') + ' ' + (_bookingChef.lastName||''),
+        chefPhone:       _bookingChef.phone || '',
+        chefCity:        _bookingChef.city || '',
+        customerName:    custName,
+        customerPhone:   custPhone,
+        customerEmail:   custEmail,
+        customerCity:    custCity,
+        customerAddress: custAddress,
+        bookingType:     _bookingType,
+        startDate:       startDate,
+        duration:        _bookingDuration,
+        amount:          amount,
+        status:          'pending',
+        bookedAt:        firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      btn.textContent = '📅 Request Booking';
+      btn.disabled = false;
+      closeBooking();
+
+      // Show success
+      document.getElementById('bm-confirm-id').textContent = docRef.id;
+      document.getElementById('bm-confirm-chef').textContent = (_bookingChef.firstName||'') + ' ' + (_bookingChef.lastName||'');
+      document.getElementById('bm-confirm-details').textContent = startDate + ' · ' + _bookingDuration + ' ' + _bookingType + '(s) · ₹' + amount.toLocaleString('en-IN');
+      const successOverlay = document.getElementById('bm-success-overlay');
+      successOverlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+    } catch(err) {
+      console.error(err);
+      showToast('❌', 'Error saving booking: ' + err.message);
+      btn.textContent = '📅 Request Booking';
+      btn.disabled = false;
+    }
+  }
+
+  function closeBookingSuccess() {
+    document.getElementById('bm-success-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+</script>
+
+</body>
+</html>

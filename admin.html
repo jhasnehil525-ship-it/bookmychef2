@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BookMyChef – Admin Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:#0f0f0f; color:#f0f0f0; min-height:100vh; }
+
+    /* ── LOGIN SCREEN ── */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 30%, rgba(212,160,23,0.08) 0%, transparent 60%);
+    }
+    .login-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-logo { font-size: 48px; margin-bottom: 16px; }
+    .login-card h1 { font-size: 24px; font-weight: 800; color: #f0c040; margin-bottom: 6px; }
+    .login-card p { font-size: 14px; color: #a0a0a0; margin-bottom: 32px; }
+    .login-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #242424;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #f0f0f0;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 16px;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      letter-spacing: 3px;
+    }
+    .login-input:focus { border-color: #d4a017; }
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #d4a017, #f0c040);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .login-btn:hover { opacity: 0.9; }
+    .login-error {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* ── ADMIN PANEL ── */
+    .admin-panel { display: none; }
+
+    .topbar {
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo { font-size: 24px; }
+    .topbar-title { font-size: 18px; font-weight: 800; color: #f0c040; }
+    .topbar-sub { font-size: 12px; color: #a0a0a0; }
+    .logout-btn {
+      padding: 7px 16px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #a0a0a0;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    .admin-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stats bar */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-num { font-size: 32px; font-weight: 800; color: #f0c040; }
+    .stat-lbl { font-size: 13px; color: #a0a0a0; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 0;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #a0a0a0;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: -1px;
+      font-family: 'Inter', sans-serif;
+    }
+    .tab-btn.active { color: #f0c040; border-bottom-color: #f0c040; }
+    .tab-btn:hover { color: #f0f0f0; }
+
+    /* Chef List */
+    .chef-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .chef-row {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: all .2s;
+    }
+    .chef-row:hover { border-color: rgba(212,160,23,0.4); }
+
+    .chef-avatar-sm {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2a1f00, #1a1400);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+      border: 1px solid rgba(212,160,23,0.2);
+      overflow: hidden;
+    }
+    .chef-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
+
+    .chef-row-info { flex: 1; }
+    .chef-row-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .chef-row-sub { font-size: 13px; color: #a0a0a0; margin-bottom: 6px; }
+    .chef-row-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-sm {
+      padding: 2px 8px;
+      background: #242424;
+      border: 1px solid #2e2e2e;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #a0a0a0;
+    }
+
+    .chef-row-status { margin-left: auto; flex-shrink: 0; }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .status-badge.pending { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.4); color: #fbbf24; }
+    .status-badge.verified { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); color: #22c55e; }
+    .status-badge.rejected { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); color: #ef4444; }
+
+    .chef-actions-row { display: flex; gap: 8px; }
+    .btn-view-chef {
+      padding: 7px 14px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.4);
+      color: #f0c040;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-view-chef:hover { background: rgba(212,160,23,0.2); }
+    .btn-verify {
+      padding: 7px 14px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.4);
+      color: #22c55e;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-verify:hover { background: rgba(34,197,94,0.2); }
+    .btn-reject {
+      padding: 7px 14px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #ef4444;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-reject:hover { background: rgba(239,68,68,0.2); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: #6b6b6b;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── DETAIL MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(20px);
+      transition: transform .3s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-header h2 { font-size: 20px; font-weight: 800; }
+    .modal-close {
+      background: none; border: none; color: #a0a0a0;
+      font-size: 22px; cursor: pointer; transition: color .2s;
+    }
+    .modal-close:hover { color: #f0f0f0; }
+
+    .modal-section { margin-bottom: 24px; }
+    .modal-section-title {
+      font-size: 11px; font-weight: 700; color: #6b6b6b;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .detail-item {
+      background: #242424;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .detail-label { font-size: 11px; color: #6b6b6b; margin-bottom: 3px; }
+    .detail-value { font-size: 14px; font-weight: 600; }
+
+    .id-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .id-photo-box {
+      background: #242424;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .id-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+    .id-photo-box .no-img { color: #6b6b6b; font-size: 13px; }
+
+    .selfie-box {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: #242424;
+      border: 2px solid #333;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .selfie-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    .modal-actions {
+      display: flex; gap: 12px; margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #333;
+    }
+    .btn-modal-verify {
+      flex: 1; padding: 13px;
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-modal-verify:hover { opacity: 0.9; }
+    .btn-modal-reject {
+      flex: 1; padding: 13px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #ef4444; border-radius: 8px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-modal-reject:hover { background: rgba(239,68,68,0.2); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #1a1a1a; border: 1px solid #d4a017;
+      border-radius: 10px; padding: 14px 20px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 1000; transform: translateY(80px); opacity: 0;
+      transition: all .3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    .loading { text-align: center; padding: 40px; color: #a0a0a0; font-size: 14px; }
+
+    /* ── BOOKING ROWS ── */
+    .booking-row {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      transition: all .2s;
+    }
+    .booking-row:hover { border-color: rgba(212,160,23,0.4); }
+    .booking-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a1f00, #141a00);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      border: 1px solid rgba(212,160,23,0.2);
+    }
+    .booking-info { flex: 1; }
+    .booking-customer { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .booking-chef-line { font-size: 13px; color: #f0c040; margin-bottom: 4px; }
+    .booking-meta { font-size: 12px; color: #a0a0a0; }
+    .booking-right { text-align: right; flex-shrink: 0; }
+    .booking-amount { font-size: 20px; font-weight: 800; color: #22c55e; margin-bottom: 4px; }
+    .booking-type-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      background: rgba(212,160,23,0.1);
+      border: 1px solid rgba(212,160,23,0.3);
+      color: #f0c040;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .booking-contact {
+      font-size: 12px; color: #a0a0a0;
+    }
+    .booking-contact a { color: #f0c040; text-decoration: none; }
+    .booking-contact a:hover { text-decoration: underline; }
+    #booking-list { display: none; flex-direction: column; gap: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">👨‍🍳</div>
+    <h1>Admin Panel</h1>
+    <p>BookMyChef · Secure Access Only</p>
+    <input class="login-input" type="password" id="password-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') checkLogin()"/>
+    <button class="login-btn" onclick="checkLogin()">🔐 Login</button>
+    <div class="login-error" id="login-error">❌ Wrong password. Try again.</div>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ── -->
+<div class="admin-panel" id="admin-panel">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">👨‍🍳</div>
+      <div>
+        <div class="topbar-title">BookMyChef Admin</div>
+        <div class="topbar-sub">Chef Verification Panel</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-lbl">Total Applications</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#fbbf24" id="stat-pending">0</div>
+        <div class="stat-lbl">Pending Review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#22c55e" id="stat-verified">0</div>
+        <div class="stat-lbl">Verified Chefs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#ef4444" id="stat-rejected">0</div>
+        <div class="stat-lbl">Rejected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:#22c55e" id="stat-bookings">0</div>
+        <div class="stat-lbl">Total Bookings</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('pending', this)">⏳ Pending</button>
+      <button class="tab-btn" onclick="switchTab('verified', this)">✅ Verified</button>
+      <button class="tab-btn" onclick="switchTab('rejected', this)">❌ Rejected</button>
+      <button class="tab-btn" onclick="switchTab('all', this)">📋 All</button>
+      <button class="tab-btn" onclick="switchTab('bookings', this)">📅 Bookings</button>
+    </div>
+
+    <!-- Chef List -->
+    <div class="chef-list" id="chef-list">
+      <div class="loading">⏳ Loading applications...</div>
+    </div>
+
+    <!-- Booking List -->
+    <div id="booking-list">
+      <div class="loading">⏳ Loading bookings...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── DETAIL MODAL ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Chef Application</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- Selfie -->
+    <div class="modal-section">
+      <div class="modal-section-title">Profile Photo</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="selfie-box">
+          <img id="modal-selfie" src="" onerror="this.style.display='none'"/>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:800" id="modal-name-big"></div>
+          <div style="font-size:13px;color:#a0a0a0;margin-top:4px" id="modal-city-sub"></div>
+          <div style="margin-top:8px" id="modal-status-badge"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Info -->
+    <div class="modal-section">
+      <div class="modal-section-title">Personal Information</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">📱 Phone</div><div class="detail-value" id="modal-phone"></div></div>
+        <div class="detail-item"><div class="detail-label">📧 Email</div><div class="detail-value" id="modal-email"></div></div>
+        <div class="detail-item"><div class="detail-label">🎂 Date of Birth</div><div class="detail-value" id="modal-dob"></div></div>
+        <div class="detail-item"><div class="detail-label">👤 Gender</div><div class="detail-value" id="modal-gender"></div></div>
+        <div class="detail-item" style="grid-column:1/-1"><div class="detail-label">🏠 Address</div><div class="detail-value" id="modal-address"></div></div>
+      </div>
+    </div>
+
+    <!-- Professional Info -->
+    <div class="modal-section">
+      <div class="modal-section-title">Professional Details</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">🕐 Experience</div><div class="detail-value" id="modal-exp"></div></div>
+        <div class="detail-item"><div class="detail-label">⚙️ Availability</div><div class="detail-value" id="modal-avail"></div></div>
+        <div class="detail-item"><div class="detail-label">💰 Monthly Rate</div><div class="detail-value" id="modal-monthly" style="color:#f0c040"></div></div>
+        <div class="detail-item"><div class="detail-label">⏰ Hourly Rate</div><div class="detail-value" id="modal-hourly" style="color:#f0c040"></div></div>
+      </div>
+      <div style="margin-top:10px;background:#242424;border-radius:8px;padding:12px">
+        <div class="detail-label">🍽️ Cuisines</div>
+        <div id="modal-cuisines" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div style="margin-top:10px;background:#242424;border-radius:8px;padding:12px">
+        <div class="detail-label">📝 About</div>
+        <div id="modal-about" style="font-size:13px;color:#f0f0f0;margin-top:4px;line-height:1.6"></div>
+      </div>
+    </div>
+
+    <!-- ID Documents -->
+    <div class="modal-section">
+      <div class="modal-section-title">ID Documents</div>
+      <div style="background:#242424;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div class="detail-label">🪪 ID Type & Number</div>
+        <div class="detail-value" id="modal-id-info" style="margin-top:4px"></div>
+      </div>
+      <div class="id-photos">
+        <div>
+          <div class="detail-label" style="margin-bottom:6px">Front of ID</div>
+          <div class="id-photo-box" onclick="openPhoto(document.getElementById('modal-id-front').src)">
+            <img id="modal-id-front" style="width:100%;height:100%;object-fit:cover;display:none" onerror="this.style.display='none'"/>
+            <span class="no-img" id="front-no-photo">No photo</span>
+          </div>
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:6px">Back of ID</div>
+          <div class="id-photo-box" onclick="openPhoto(document.getElementById('modal-id-back').src)">
+            <img id="modal-id-back" style="width:100%;height:100%;object-fit:cover;display:none" onerror="this.style.display='none'"/>
+            <span class="no-img" id="back-no-photo">No photo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modal-actions" id="modal-actions">
+      <button class="btn-modal-verify" onclick="verifyChef()">✅ Verify & Approve Chef</button>
+      <button class="btn-modal-reject" onclick="rejectChef()">❌ Reject Application</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Done</span>
+</div>
+
+<script>
+  // ── Firebase ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFvgp21s09KDVK6rv3Ay7TDnRg8l079Wk",
+    authDomain: "bookmychef-6475d.firebaseapp.com",
+    projectId: "bookmychef-6475d",
+    storageBucket: "bookmychef-6475d.firebasestorage.app",
+    messagingSenderId: "397815258611",
+    appId: "1:397815258611:web:1c68d76df5be25af350686"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ── Admin Password (change this!) ──
+  const ADMIN_PASSWORD = 'bookmychef2026';
+
+  // ── State ──
+  let allChefs = [];
+  let allBookings = [];
+  let currentTab = 'pending';
+  let currentChefId = null;
+
+  // ── Login ──
+  function checkLogin() {
+    const pwd = document.getElementById('password-input').value;
+    if (pwd === ADMIN_PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      document.getElementById('chef-list').style.display = 'flex';
+      document.getElementById('booking-list').style.display = 'none';
+      loadChefs();
+      // load booking count for stat
+      db.collection('bookings').get().then(s => {
+        document.getElementById('stat-bookings').textContent = s.size;
+      }).catch(()=>{});
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('password-input').value = '';
+    }
+  }
+
+  function logout() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('password-input').value = '';
+  }
+
+  // ── Load Chefs ──
+  async function loadChefs() {
+    try {
+      const snap = await db.collection('chefs').orderBy('submittedAt', 'desc').get();
+      allChefs = [];
+      snap.forEach(doc => allChefs.push({ id: doc.id, ...doc.data() }));
+      updateStats();
+      renderChefs();
+    } catch(e) {
+      // submittedAt index might not exist yet — try without orderBy
+      try {
+        const snap2 = await db.collection('chefs').get();
+        allChefs = [];
+        snap2.forEach(doc => allChefs.push({ id: doc.id, ...doc.data() }));
+        updateStats();
+        renderChefs();
+      } catch(e2) {
+        document.getElementById('chef-list').innerHTML = '<div class="loading">❌ Error loading data: ' + e2.message + '</div>';
+      }
+    }
+  }
+
+  function updateStats() {
+    const total    = allChefs.length;
+    const pending  = allChefs.filter(c => c.status === 'pending').length;
+    const verified = allChefs.filter(c => c.status === 'verified').length;
+    const rejected = allChefs.filter(c => c.status === 'rejected').length;
+    document.getElementById('stat-total').textContent    = total;
+    document.getElementById('stat-pending').textContent  = pending;
+    document.getElementById('stat-verified').textContent = verified;
+    document.getElementById('stat-rejected').textContent = rejected;
+  }
+
+  function renderChefs() {
+    const list = document.getElementById('chef-list');
+    let chefs = currentTab === 'all' ? allChefs : allChefs.filter(c => c.status === currentTab);
+
+    if (chefs.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No ${currentTab} applications</p></div>`;
+      return;
+    }
+
+    list.innerHTML = chefs.map(c => `
+      <div class="chef-row">
+        <div class="chef-avatar-sm">
+          ${c.selfieUrl ? `<img src="${c.selfieUrl}" onerror="this.style.display='none';this.parentElement.textContent='👨‍🍳'"/>` : '👨‍🍳'}
+        </div>
+        <div class="chef-row-info">
+          <div class="chef-row-name">${c.firstName || ''} ${c.lastName || ''}</div>
+          <div class="chef-row-sub">📍 ${c.city || 'N/A'} · 📱 ${c.phone || 'N/A'} · ${c.experience || 'N/A'} exp</div>
+          <div class="chef-row-tags">
+            ${(c.cuisines||[]).slice(0,3).map(t=>`<span class="tag-sm">${t}</span>`).join('')}
+            ${c.idType ? `<span class="tag-sm">🪪 ${c.idType}</span>` : ''}
+          </div>
+        </div>
+        <div class="chef-row-status" style="text-align:right">
+          <div class="status-badge ${c.status}">${statusLabel(c.status)}</div>
+          <div class="chef-actions-row" style="justify-content:flex-end">
+            <button class="btn-view-chef" onclick="openModal('${c.id}')">👁 View</button>
+            ${c.status === 'pending' ? `
+              <button class="btn-verify" onclick="quickVerify('${c.id}')">✅</button>
+              <button class="btn-reject" onclick="quickReject('${c.id}')">❌</button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function statusLabel(s) {
+    if (s === 'pending')  return '⏳ Pending';
+    if (s === 'verified') return '✅ Verified';
+    if (s === 'rejected') return '❌ Rejected';
+    return s;
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (tab === 'bookings') {
+      document.getElementById('chef-list').style.display = 'none';
+      document.getElementById('booking-list').style.display = 'flex';
+      loadBookings();
+    } else {
+      document.getElementById('chef-list').style.display = 'flex';
+      document.getElementById('booking-list').style.display = 'none';
+      renderChefs();
+    }
+  }
+
+  // ── Load Bookings ──
+  async function loadBookings() {
+    const bl = document.getElementById('booking-list');
+    bl.innerHTML = '<div class="loading">⏳ Loading bookings...</div>';
+    try {
+      const snap = await db.collection('bookings').orderBy('bookedAt', 'desc').get();
+      allBookings = [];
+      snap.forEach(doc => allBookings.push({ id: doc.id, ...doc.data() }));
+      document.getElementById('stat-bookings').textContent = allBookings.length;
+      renderBookings();
+    } catch(e) {
+      try {
+        const snap2 = await db.collection('bookings').get();
+        allBookings = [];
+        snap2.forEach(doc => allBookings.push({ id: doc.id, ...doc.data() }));
+        document.getElementById('stat-bookings').textContent = allBookings.length;
+        renderBookings();
+      } catch(e2) {
+        bl.innerHTML = '<div class="loading">❌ Error loading bookings: ' + e2.message + '</div>';
+      }
+    }
+  }
+
+  function renderBookings() {
+    const bl = document.getElementById('booking-list');
+    if (allBookings.length === 0) {
+      bl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No bookings yet</p></div>';
+      return;
+    }
+    bl.innerHTML = allBookings.map(b => {
+      const typeIcon = b.bookingType === 'hourly' ? '⏰' : b.bookingType === 'daily' ? '📆' : '🗓️';
+      const bookedDate = b.bookedAt?.toDate ? b.bookedAt.toDate().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : b.startDate || '—';
+      const durationLabel = b.bookingType === 'hourly' ? `${b.duration} hr(s)` : b.bookingType === 'daily' ? `${b.duration} day(s)` : `${b.duration} month(s)`;
+      return `
+        <div class="booking-row">
+          <div class="booking-icon">${typeIcon}</div>
+          <div class="booking-info">
+            <div class="booking-customer">👤 ${b.customerName || '—'}</div>
+            <div class="booking-chef-line">👨‍🍳 Chef: ${b.chefName || '—'}</div>
+            <div class="booking-meta">📅 ${b.startDate || '—'} · ⏱ ${durationLabel} · Booked on ${bookedDate}</div>
+            <div class="booking-contact" style="margin-top:6px">
+              📱 <a href="tel:${b.customerPhone}">${b.customerPhone || '—'}</a>
+              &nbsp;·&nbsp;
+              📧 ${b.customerEmail || '—'}
+              &nbsp;·&nbsp;
+              🏠 ${b.customerAddress || '—'}
+            </div>
+          </div>
+          <div class="booking-right">
+            <div class="booking-amount">₹${Number(b.amount || 0).toLocaleString('en-IN')}</div>
+            <div class="booking-type-badge">${b.bookingType || '—'}</div>
+            <div class="booking-contact">ID: ${b.id.slice(0,10)}...</div>
+            <div style="margin-top:8px">
+              <a href="https://wa.me/91${b.customerPhone}" target="_blank" style="display:inline-block;padding:5px 12px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);color:#25D366;border-radius:6px;font-size:11px;font-weight:700;text-decoration:none;">💬 WhatsApp</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Quick Actions ──
+  async function quickVerify(id) {
+    await db.collection('chefs').doc(id).update({ status: 'verified' });
+    const chef = allChefs.find(c => c.id === id);
+    if (chef) chef.status = 'verified';
+    updateStats(); renderChefs();
+    showToast('✅', 'Chef verified! They will now appear on the website.');
+  }
+
+  async function quickReject(id) {
+    await db.collection('chefs').doc(id).update({ status: 'rejected' });
+    const chef = allChefs.find(c => c.id === id);
+    if (chef) chef.status = 'rejected';
+    updateStats(); renderChefs();
+    showToast('❌', 'Application rejected.');
+  }
+
+  // ── Modal ──
+  function openModal(id) {
+    currentChefId = id;
+    const c = allChefs.find(c => c.id === id);
+    if (!c) return;
+    try {
+
+    document.getElementById('modal-title').textContent = `${c.firstName || ''} ${c.lastName || ''} — Application`;
+    document.getElementById('modal-name-big').textContent = `${c.firstName || ''} ${c.lastName || ''}`;
+    document.getElementById('modal-city-sub').textContent = `${c.city || ''} · ${c.experience || ''} experience`;
+    document.getElementById('modal-status-badge').innerHTML = `<span class="status-badge ${c.status}">${statusLabel(c.status)}</span>`;
+
+    // Selfie
+    const selfieEl = document.getElementById('modal-selfie');
+    if (c.selfieUrl) { selfieEl.src = c.selfieUrl; selfieEl.style.display = 'block'; }
+    else selfieEl.style.display = 'none';
+
+    // Personal
+    document.getElementById('modal-phone').textContent   = c.phone || '—';
+    document.getElementById('modal-email').textContent   = c.email || '—';
+    document.getElementById('modal-dob').textContent     = c.dob   || '—';
+    document.getElementById('modal-gender').textContent  = c.gender|| '—';
+    document.getElementById('modal-address').textContent = c.address|| '—';
+
+    // Professional
+    document.getElementById('modal-exp').textContent     = c.experience  || '—';
+    document.getElementById('modal-avail').textContent   = c.availability|| '—';
+    document.getElementById('modal-monthly').textContent = c.monthlyRate ? '₹' + c.monthlyRate + '/mo' : '—';
+    document.getElementById('modal-hourly').textContent  = c.hourlyRate  ? '₹' + c.hourlyRate  + '/hr' : '—';
+    document.getElementById('modal-about').textContent   = c.about || '—';
+    document.getElementById('modal-cuisines').innerHTML  = (c.cuisines||[]).map(t=>`<span class="tag-sm">${t}</span>`).join('');
+
+    // ID
+    document.getElementById('modal-id-info').textContent = `${c.idType || '—'} · ${c.idNumber || '—'}`;
+    const frontEl = document.getElementById('modal-id-front');
+    const backEl  = document.getElementById('modal-id-back');
+    if (c.idFrontUrl) {
+      frontEl.src = c.idFrontUrl; frontEl.style.display = 'block';
+      document.getElementById('front-no-photo').style.display = 'none';
+    } else {
+      frontEl.style.display = 'none';
+      document.getElementById('front-no-photo').style.display = '';
+    }
+    if (c.idBackUrl) {
+      backEl.src = c.idBackUrl; backEl.style.display = 'block';
+      document.getElementById('back-no-photo').style.display = 'none';
+    } else {
+      backEl.style.display = 'none';
+      document.getElementById('back-no-photo').style.display = '';
+    }
+
+    // Actions — hide if already decided
+    document.getElementById('modal-actions').style.display = c.status === 'pending' ? 'flex' : 'none';
+    } catch(err) { console.error('Modal populate error:', err); }
+
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  async function verifyChef() {
+    if (!currentChefId) return;
+    await quickVerify(currentChefId);
+    closeModal();
+  }
+
+  async function rejectChef() {
+    if (!currentChefId) return;
+    await quickReject(currentChefId);
+    closeModal();
+  }
+
+  function openPhoto(url) {
+    if (url) window.open(url, '_blank');
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(icon, msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-icon').textContent = icon;
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+</script>
+
+</body>
+</html>
